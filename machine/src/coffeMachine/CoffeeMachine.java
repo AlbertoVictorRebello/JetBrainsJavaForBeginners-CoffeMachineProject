@@ -1,14 +1,22 @@
 package coffeMachine;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
 
 public class CoffeeMachine {
-    private static Recipe receipe;
+    private static Recipe [] recipeList = new Recipe[] {loadRecipe("REGULAR_COFFEE")};
+    private static IngredientBin ingredientBin01= new IngredientBin("INGREDIENT_BIN_1");
+
     public static void main(String[] args) {
-        displayMessage("COFFEE_PREPARATION");
-        forecast("REGULAR_COFFEE");
+        for (Recipe recipe : recipeList) {
+            ingredientBin01.supply(recipe);
+            //supplyForecast(recipe);
+            yieldForecast(recipe);
+        }
+
+        //displayMessage("COFFEE_PREPARATION");
+
+
 
     }
 
@@ -52,17 +60,17 @@ public class CoffeeMachine {
         System.out.println(message);
     }
 
-    public float availability(Recipe receipe){
-        return 0f;
+    public boolean supplyIngredientBin(String recipeName){
+
+        return true;
     }
 
-    public boolean deploy(Recipe receipe, float quantity){
+    public boolean deploy(Recipe recipe, float quantity){
         return false;
 
     }
 
-    public static void forecast(String recipeName){
-        Recipe recipe = loadRecipe(recipeName);
+    public static void supplyForecast(Recipe recipe){
         Scanner scanner = new Scanner(System.in);
 
         System.out.println("Write how many cups of coffee you will need:");
@@ -74,6 +82,28 @@ public class CoffeeMachine {
 
         displayMessage(message);
 
+    }
+
+    public static void yieldForecast(Recipe recipe){
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Write how many cups of coffee you will need:");
+        int demand = scanner.nextInt();
+        int minYield = Integer.MAX_VALUE;
+
+        for (Ingredient itemRecipe : recipe.getIngredients()) {
+            for (Ingredient itemBin : ingredientBin01.getStock()) {
+                if (itemRecipe.getName().equals(itemBin.getName())) {
+                    minYield = (int) Math.min(minYield, Math.floor (itemBin.getQuantity() / itemRecipe.getQuantity()));
+                }
+            }
+        }
+        if (demand == minYield) {
+            displayMessage("Yes, I can make that amount of coffee");
+        } else if (demand > minYield) {
+            displayMessage(String.format("No, I can make only %s cup(s) of coffee", minYield));
+        } else {
+            displayMessage(String.format("Yes, I can make that amount of coffee (and even %s more than that)", minYield - demand));
+        }
     }
 
 }
@@ -175,5 +205,44 @@ class Ingredient {
 
     public void setQuantity(float quantity) {
         this.quantity = quantity;
+    }
+}
+
+class IngredientBin {
+    private Scanner scanner = new Scanner(System.in);
+    private String name;
+    private ArrayList<Ingredient> stock = new ArrayList<>();
+
+    public IngredientBin(String name) {
+        this.name = name;
+    }
+
+    public ArrayList<Ingredient> getStock() {
+        return stock;
+    }
+
+    public void setStock(ArrayList<Ingredient> stock) {
+        this.stock = stock;
+    }
+
+    public boolean queue(Ingredient ingredient) {
+        return false;
+
+    }
+
+    public boolean supply(Recipe recipe) {
+
+        float input;
+        for (Ingredient item : recipe.getIngredients()) {
+            Ingredient ingredient = new Ingredient();
+            ingredient.setName(item.getName());
+            ingredient.setUnitOfMeasurement(item.getUnitOfMeasurement());
+            System.out.printf("Write how many %s of %s the coffee machine has:", item.getUnitOfMeasurement(), item.getName());
+            input = scanner.nextFloat();
+            ingredient.setQuantity(input);
+            stock.add(ingredient);
+        }
+
+        return true;
     }
 }
