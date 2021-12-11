@@ -21,46 +21,47 @@ public class CoffeeMachine {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         ingredientBin01.supply(recipeList[0]);
-        ingredientBin01.displayStock();
         disposableCups = recipeList[0].getYield();
-        System.out.println(disposableCups + " disposable cups");
         moneyBin02 = 550;
-        System.out.println("$" + moneyBin02 + " of money");
-        System.out.println("Write action (buy, fill, take):");
-        do {
-            String action = scanner.next();
+        System.out.println("Write action (buy, fill, take, remaining, exit):");
+        String action = scanner.next();
+        while (!"exit".equals(action)) {
             switch (action) {
                 case "buy":
                     System.out.println("What do you want to buy? 1 - espresso, 2 - latte, 3 - cappuccino:");
-                    int product = scanner.nextInt();
-                    moneyBin02 += Math.round(recipeList[product].getPrice());
-                    disposableCups--;
-                    ingredientBin01.deploy(recipeList[product]);
-                    ingredientBin01.displayStock();
-                    System.out.println(disposableCups + " disposable cups");
-                    System.out.println("$" + moneyBin02 + " of money");
+                    String option = scanner.next();
+                    if(!"back".equals(option)) {
+                        int product = Integer.parseInt(option);
+                        if (yieldForecast(recipeList[product], true, 1) > 0 && disposableCups > 0) {
+                            moneyBin02 += Math.round(recipeList[product].getPrice());
+                            disposableCups--;
+                            ingredientBin01.deploy(recipeList[product]);
+                        }
+                    }
                     break;
 
                 case "fill":
                     ingredientBin01.supply();
                     System.out.println("Write how many disposable cups of coffee you want to add:");
                     disposableCups += scanner.nextInt();
-                    ingredientBin01.displayStock();
-                    System.out.println(disposableCups + " disposable cups");
-                    System.out.println("$" + moneyBin02 + " of money");
                     break;
 
                 case "take":
-                    System.out.printf("I gave you $%d\n", moneyBin02);
+                    System.out.printf("I gave you $%d\n\n", moneyBin02);
                     moneyBin02 = 0;
+                    break;
+
+                case "remaining":
                     ingredientBin01.displayStock();
                     System.out.println(disposableCups + " disposable cups");
                     System.out.println("$" + moneyBin02 + " of money");
                     break;
             }
-        } while (false);
+            System.out.println("Write action (buy, fill, take, remaining, exit):");
+            action = scanner.next();
+        }
         //supplyForecast(recipeList[0]);
-            //yieldForecast(recipe);
+
 
 
         for (Money money : moneyBucket) {
@@ -207,25 +208,53 @@ public class CoffeeMachine {
 
     }
 
-    public static void yieldForecast(Recipe recipe){
+    public static int yieldForecast(Recipe recipe, boolean verbose, int... quantity){
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Write how many cups of coffee you will need:");
-        int demand = scanner.nextInt();
+
+        int demand;
+        int yield;
+        ArrayList<String> missingIngredients = new ArrayList<>();
+        if (quantity.length == 1) {
+            demand = quantity[0];
+        } else {
+            System.out.println("Write how many cups of coffee you will need:");
+            demand = scanner.nextInt();
+        }
+
         int minYield = Integer.MAX_VALUE;
 
         for (Ingredient itemRecipe : recipe.getIngredients()) {
             for (Ingredient itemBin : ingredientBin01.getStock()) {
                 if (itemRecipe.getName().equals(itemBin.getName())) {
-                    minYield = (int) Math.min(minYield, Math.floor (itemBin.getQuantity() / itemRecipe.getQuantity()));
+                    yield = (int) Math.floor (itemBin.getQuantity() / itemRecipe.getQuantity());
+                    minYield = Math.min(minYield, yield);
+                    if (demand > yield) {
+                        missingIngredients.add(itemBin.getName());
+                    }
                 }
             }
         }
         if (demand == minYield) {
-            displayMessage("Yes, I can make that amount of coffee");
+            if (verbose) {
+                //displayMessage("Yes, I can make that amount of coffee");
+                displayMessage("I have enough resources, making you a coffee!");
+            }
+            return minYield;
+
         } else if (demand > minYield) {
-            displayMessage(String.format("No, I can make only %s cup(s) of coffee", minYield));
+            if (verbose) {
+                //displayMessage(String.format("No, I can make only %s cup(s) of coffee", minYield));
+                for (String item : missingIngredients) {
+                    System.out.printf("Sorry, not enough %s!\n", item);
+                }
+            }
+            return 0;
         } else {
-            displayMessage(String.format("Yes, I can make that amount of coffee (and even %s more than that)", minYield - demand));
+            if (verbose) {
+                //displayMessage(String.format("Yes, I can make that amount of coffee (and even %s more than that)", minYield - demand));
+                displayMessage("I have enough resources, making you a coffee!");
+            }
+            return minYield - demand;
         }
     }
 
