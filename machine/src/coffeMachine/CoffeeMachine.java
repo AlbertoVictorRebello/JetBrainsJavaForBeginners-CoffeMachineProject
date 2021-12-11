@@ -1,17 +1,70 @@
 package coffeMachine;
 
+import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.Map;
 import java.util.Scanner;
 
 public class CoffeeMachine {
-    private static Recipe [] recipeList = new Recipe[] {loadRecipe("REGULAR_COFFEE")};
+    private static Recipe[] recipeList = new Recipe[] {
+            loadRecipe("SETUP"),
+            loadRecipe("ESPRESSO"),
+            loadRecipe("LATTE"),
+            loadRecipe("CAPPUCCINO")};
+    private static Money[] moneyBucket = new Money[] {loadMoney("ONE_DOLLAR_BILL")};
     private static IngredientBin ingredientBin01= new IngredientBin("INGREDIENT_BIN_1");
+    private static MoneyBin moneyBin01 = new MoneyBin("MONEY_BIN_01");
+    private static int moneyBin02;
+    private static int disposableCups;
 
     public static void main(String[] args) {
-        for (Recipe recipe : recipeList) {
-            ingredientBin01.supply(recipe);
-            //supplyForecast(recipe);
-            yieldForecast(recipe);
+        Scanner scanner = new Scanner(System.in);
+        ingredientBin01.supply(recipeList[0]);
+        ingredientBin01.displayStock();
+        disposableCups = recipeList[0].getYield();
+        System.out.println(disposableCups + " disposable cups");
+        moneyBin02 = 550;
+        System.out.println("$" + moneyBin02 + " of money");
+        System.out.println("Write action (buy, fill, take):");
+        do {
+            String action = scanner.next();
+            switch (action) {
+                case "buy":
+                    System.out.println("What do you want to buy? 1 - espresso, 2 - latte, 3 - cappuccino:");
+                    int product = scanner.nextInt();
+                    moneyBin02 += Math.round(recipeList[product].getPrice());
+                    disposableCups--;
+                    ingredientBin01.deploy(recipeList[product]);
+                    ingredientBin01.displayStock();
+                    System.out.println(disposableCups + " disposable cups");
+                    System.out.println("$" + moneyBin02 + " of money");
+                    break;
+
+                case "fill":
+                    ingredientBin01.supply();
+                    System.out.println("Write how many disposable cups of coffee you want to add:");
+                    disposableCups += scanner.nextInt();
+                    ingredientBin01.displayStock();
+                    System.out.println(disposableCups + " disposable cups");
+                    System.out.println("$" + moneyBin02 + " of money");
+                    break;
+
+                case "take":
+                    System.out.printf("I gave you $%d\n", moneyBin02);
+                    moneyBin02 = 0;
+                    ingredientBin01.displayStock();
+                    System.out.println(disposableCups + " disposable cups");
+                    System.out.println("$" + moneyBin02 + " of money");
+                    break;
+            }
+        } while (false);
+        //supplyForecast(recipeList[0]);
+            //yieldForecast(recipe);
+
+
+        for (Money money : moneyBucket) {
+            moneyBin01.supply(money);
         }
 
         //displayMessage("COFFEE_PREPARATION");
@@ -20,25 +73,95 @@ public class CoffeeMachine {
 
     }
 
+    public static Money loadMoney(String name) {
+        Money money = new Money();
+        switch (name) {
+            case "ONE_DOLLAR_BILL":
+                money.setName("one dollar bill");
+                money.setUnitOfMeasurement("USD");
+                money.setQuantity(1);
+                break;
+        }
+        return money;
+
+    }
+
     public static Recipe loadRecipe(String name){
         Recipe recipe = new Recipe();
+        Ingredient ingredient;
+        ArrayList<Ingredient> ingredients;
 
         switch (name) {
-            case "REGULAR_COFFEE":
-                recipe.setName("Regular Coffee");
-                recipe.setPreparationTime(15);
+            case "SETUP":
+                recipe.setName("setup");
+                recipe.setPreparationTime(6000);
 
-                ArrayList<Ingredient> ingredients = new ArrayList<>();
-                Ingredient ingredient = new Ingredient("water", "ml", 200F);
+                ingredients = new ArrayList<>();
+                ingredient = new Ingredient("water", "ml", 400F);
                 ingredients.add(ingredient);
-                ingredient = new Ingredient("milk", "ml", 50F);
+                ingredient = new Ingredient("milk", "ml", 540F);
                 ingredients.add(ingredient);
-                ingredient = new Ingredient("coffee beans", "g", 15F);
+                ingredient = new Ingredient("coffee beans", "g", 120F);
+                ingredients.add(ingredient);
+                recipe.setIngredients(ingredients);
+
+                recipe.setPackingType(PackingType.CUP_OF_300_ML);
+                recipe.setYield(9);
+                recipe.setPrice(550);
+                break;
+
+                case "ESPRESSO":
+                recipe.setName("espresso");
+                recipe.setPreparationTime(10);
+
+                ingredients = new ArrayList<>();
+                ingredient = new Ingredient("water", "ml", 250F);
+                ingredients.add(ingredient);
+                ingredient = new Ingredient("milk", "ml", 0F);
+                ingredients.add(ingredient);
+                ingredient = new Ingredient("coffee beans", "g", 16F);
                 ingredients.add(ingredient);
                 recipe.setIngredients(ingredients);
 
                 recipe.setPackingType(PackingType.CUP_OF_300_ML);
                 recipe.setYield(1);
+                recipe.setPrice(4);
+                break;
+
+            case "LATTE":
+                recipe.setName("latte");
+                recipe.setPreparationTime(15);
+
+                ingredients = new ArrayList<>();
+                ingredient = new Ingredient("water", "ml", 350F);
+                ingredients.add(ingredient);
+                ingredient = new Ingredient("milk", "ml", 75F);
+                ingredients.add(ingredient);
+                ingredient = new Ingredient("coffee beans", "g", 20F);
+                ingredients.add(ingredient);
+                recipe.setIngredients(ingredients);
+
+                recipe.setPackingType(PackingType.CUP_OF_300_ML);
+                recipe.setYield(1);
+                recipe.setPrice(7);
+                break;
+
+            case "CAPPUCCINO":
+                recipe.setName("cappuccino");
+                recipe.setPreparationTime(15);
+
+                ingredients = new ArrayList<>();
+                ingredient = new Ingredient("water", "ml", 200F);
+                ingredients.add(ingredient);
+                ingredient = new Ingredient("milk", "ml", 100F);
+                ingredients.add(ingredient);
+                ingredient = new Ingredient("coffee beans", "g", 12F);
+                ingredients.add(ingredient);
+                recipe.setIngredients(ingredients);
+
+                recipe.setPackingType(PackingType.CUP_OF_300_ML);
+                recipe.setYield(1);
+                recipe.setPrice(6);
                 break;
         }
         return recipe;
@@ -114,6 +237,7 @@ class Recipe {
     private ArrayList<Ingredient> ingredients = new ArrayList<>();
     private PackingType packingType;
     private int yield;
+    private float price;
 
        public void setName(String name) {
         this.name = name;
@@ -130,6 +254,10 @@ class Recipe {
     public void setPackingType(PackingType packingType) {
         this.packingType = packingType;
     }
+
+    public void setPrice(float price) {this.price = price;}
+
+    public float getPrice() { return price;    }
 
     public String getName() {
         return name;
@@ -157,7 +285,7 @@ class Recipe {
 }
 
 enum PackingType {
-    CUP_OF_300_ML("cupOf300Ml", "cup");
+    CUP_OF_300_ML("disposable cup of 300Ml", "disposable cup");
 
     String longDescription;
     String shortDescription;
@@ -165,6 +293,40 @@ enum PackingType {
     PackingType(String longDescription, String shortDescription) {
         this.longDescription = longDescription;
         this.shortDescription = shortDescription;
+    }
+}
+
+class Money {
+    private String name = "";
+    private String unitOfMeasurement = "";
+    private float quantity = 0;
+
+    public Money() {
+
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getUnitOfMeasurement() {
+        return unitOfMeasurement;
+    }
+
+    public void setUnitOfMeasurement(String unitOfMeasurement) {
+        this.unitOfMeasurement = unitOfMeasurement;
+    }
+
+    public float getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(float quantity) {
+        this.quantity = quantity;
     }
 }
 
@@ -225,10 +387,14 @@ class IngredientBin {
         this.stock = stock;
     }
 
-    public boolean queue(Ingredient ingredient) {
-        return false;
+    public void displayStock() {
+        System.out.println("The coffee machine has:");
+        for (Ingredient item : stock) {
+            System.out.printf("%d %s of %s\n",Math.round(item.getQuantity()), item.getUnitOfMeasurement(), item.getName());
+        }
 
     }
+
 
     public boolean supply(Recipe recipe) {
 
@@ -237,12 +403,69 @@ class IngredientBin {
             Ingredient ingredient = new Ingredient();
             ingredient.setName(item.getName());
             ingredient.setUnitOfMeasurement(item.getUnitOfMeasurement());
-            System.out.printf("Write how many %s of %s the coffee machine has:", item.getUnitOfMeasurement(), item.getName());
-            input = scanner.nextFloat();
+            //System.out.printf("Write how many %s of %s the coffee machine has:", item.getUnitOfMeasurement(), item.getName());
+            //input = scanner.nextFloat();
+            input = item.getQuantity();
             ingredient.setQuantity(input);
             stock.add(ingredient);
+        }
+        return true;
+    }
+
+    public boolean supply() {
+        float input;
+        for (Ingredient item : stock) {
+            System.out.printf("Write how many %s of %s you want to add:", item.getUnitOfMeasurement(), item.getName());
+            input = scanner.nextInt();
+            item.setQuantity(item.getQuantity() + input);
         }
 
         return true;
     }
+
+    public boolean deploy(Recipe recipe) {
+
+        float input;
+        for (Ingredient item : recipe.getIngredients()) {
+            for (Ingredient ingredient : stock) {
+                if (ingredient.getName().equals(item.getName())) {
+                    ingredient.setQuantity(ingredient.getQuantity() - item.getQuantity());
+                }
+            }
+        }
+        return true;
+    }
 }
+
+class MoneyBin {
+    private Scanner scanner = new Scanner(System.in);
+    private String name;
+    private Map<Money, Integer> stock = new Hashtable<>();
+
+    public MoneyBin(String name) {
+        this.name = name;
+    }
+
+    public int getStock(String moneyName) {
+        for (Map.Entry<Money, Integer> entry : stock.entrySet()) {
+            if (entry.getKey().equals(moneyName)) {
+                return entry.getValue();
+            }
+        }
+
+        return 0;
+    }
+
+    public boolean withDraw(String moneyName) {
+        return false;
+
+    }
+
+    public boolean supply(Money money) {
+        int quantity = 550;
+        stock.put(money, quantity);
+
+        return true;
+    }
+}
+
